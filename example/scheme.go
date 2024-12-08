@@ -1,50 +1,25 @@
+// scheme.go
 package main
 
-type Endpoint struct {
-	Path   string `yaml:"path"`
-	Method string `yaml:"method"`
+type App1 struct {
+	Key1 string `yaml:"key1"`
+	Key2 string `yaml:"key2"`
 }
 
-type API struct {
-	Port      int        `yaml:"port"`
-	Debug     bool       `yaml:"debug"`
-	Endpoints []Endpoint `yaml:"endpoints"`
+type App2 struct {
+	Key3 []string `yaml:"key3"`
 }
 
-type Frontend struct {
-	Port        int      `yaml:"port"`
-	EnableHTTPS bool     `yaml:"enable_https"`
-	Domains     []string `yaml:"domains"`
-}
-
-type Replica struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
-}
-
-type Database struct {
-	Host     string    `yaml:"host"`
-	Port     int       `yaml:"port"`
-	Username string    `yaml:"username"`
-	Password string    `yaml:"password"`
-	Replicas []Replica `yaml:"replicas"`
-}
-
-type Upstream struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
-}
-
-type Proxy struct {
-	Host      string     `yaml:"host"`
-	Port      int        `yaml:"port"`
-	SSL       bool       `yaml:"ssl"`
-	Upstreams []Upstream `yaml:"upstreams"`
+type App3 struct {
+	Key4 string `yaml:"key4"`
 }
 
 type Scheme struct {
-	API      API      `yaml:"api"`
-	Frontend Frontend `yaml:"frontend"`
-	Database Database `yaml:"database"`
-	Proxy    Proxy    `yaml:"proxy"`
+	App1  App1    `yaml:"app1"`
+	App2  App2    `yaml:"app2"`
+	App3  App3    `yaml:"app3"`
+	Data1 *string `yaml:"data1"`
+	Data2 *string `yaml:"data2"`
+	Data3 int     `yaml:"data3"`
 }
+
