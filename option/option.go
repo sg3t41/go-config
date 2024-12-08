@@ -1,87 +1,63 @@
 package option
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"strings"
-	"sync"
+
+	"github.com/sg3t41/gocnf/enum"
 )
 
-type RunMode int
-
-const (
-	Development RunMode = iota
-	Staging
-	Production
-)
-
-func (r RunMode) String() string {
-	switch r {
-	case Development:
-		return "development"
-	case Staging:
-		return "staging"
-	case Production:
-		return "production"
-	default:
-		return "development"
-	}
-}
-
+// Optionはアプリケーションの実行モードと、モードに対応するファイルパスを保持する構造体
 type Option struct {
-	RunMode RunMode
-	File    struct {
-		BasePath string
-		Name     map[RunMode]string
-	}
+	DefaultFilePath string
+	RunMode         enum.RunMode
+	ModeToFilePath  map[enum.RunMode]string
 }
-
-var (
-	once     sync.Once
-	instance *Option
-)
 
 func NewOption() *Option {
-	once.Do(func() {
-		instance = &Option{
-			File: struct {
-				BasePath string
-				Name     map[RunMode]string
-			}{
-				Name: make(map[RunMode]string),
-			},
-		}
-	})
-	return instance
+	option := &Option{
+		ModeToFilePath: make(map[enum.RunMode]string),
+	}
+	return option
 }
 
-func (opt *Option) SetFileName(mode RunMode, filename string) *Option {
-	opt.File.Name[mode] = filename
+func (opt *Option) SetDefaultFilePath(path string) *Option {
+	opt.DefaultFilePath = path
 	return opt
 }
 
-func (opt *Option) SetRunMode(mode RunMode) *Option {
+// SetModeToFilePathは指定したモードとファイルパスのペアを設定します
+func (opt *Option) SetModeToFilePath(mode enum.RunMode, path string) *Option {
+	opt.ModeToFilePath[mode] = path
+	return opt
+}
+
+// SetRunModeはOptionのRunModeを設定します
+func (opt *Option) SetRunMode(mode enum.RunMode) *Option {
 	opt.RunMode = mode
 	return opt
 }
 
-func (opt *Option) SetBasePath(path string) *Option {
-	opt.File.BasePath = path
-	return opt
-}
-
-func (opt *Option) LoadCurrentRunMode(key string) *Option {
+// LoadCurrentRunModeは環境変数から実行モードを読み込み、適切なモードをセットします
+func (opt *Option) SetCurrentRunMode(key string) *Option {
 	mode := os.Getenv(key)
-	fmt.Println(mode)
+	printMode := mode
+	if printMode == "" {
+		log.Printf("【INFO】実行モード($%s)が設定されていません。", key)
+	} else {
+		log.Printf("【INFO】実行モード [%s] で設定ファイルを読み込みます。\n", printMode)
+	}
 	switch {
-	case strings.EqualFold(mode, Development.String()):
-		opt.RunMode = Development
-	case strings.EqualFold(mode, Staging.String()):
-		opt.RunMode = Staging
-	case strings.EqualFold(mode, Production.String()):
-		opt.RunMode = Production
+	case strings.EqualFold(mode, enum.Development.String()):
+		opt.RunMode = enum.Development
+	case strings.EqualFold(mode, enum.Staging.String()):
+		opt.RunMode = enum.Staging
+	case strings.EqualFold(mode, enum.Production.String()):
+		opt.RunMode = enum.Production
 	default:
-		opt.RunMode = Development
+		log.Printf("【INFO】実行モードの設定値 [%s] は不正です。 既定値は[development], [staging], [production] のいずれかです。\n", mode)
+		opt.RunMode = enum.Default
 	}
 	return opt
 }

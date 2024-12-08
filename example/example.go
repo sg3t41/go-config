@@ -2,36 +2,41 @@ package main
 
 import (
 	"fmt"
+	"log"
 
-	c "github.com/sg3t41/gocnf"
-	o "github.com/sg3t41/gocnf/option"
+	"github.com/sg3t41/gocnf"
+	"github.com/sg3t41/gocnf/enum"
+	"github.com/sg3t41/gocnf/option"
 )
 
 var (
-	ConfigFileBasePath    = "/config"
-	DevelopConfigFileName = "config.develop.yml"
-	StagingConfigFileName = "config.staging.yml"
-	ProductConfigFileName = "config.product.yml"
+	defaultConfigFilePath = "../config/config.local.yml"
+	developConfigFilePath = "../config/config.develop.yml"
+	stagingConfigFilePath = "../config/config.staging.yml"
+	productConfigFilePath = "../config/config.product.yml"
 
 	/*
-	   RunModeEnvKey はアプリケーションの実行モードを設定する環境変数のキーを指定します。
+	   runModeEnvKey はアプリケーションの実行モードを設定する環境変数のキーを指定します。
 	   設定可能な値は "development", "staging", "production" です。
 
 	   設定例:
 	   	export RUN_MODE=development
 	*/
-	RunModeEnvKey = "RUN_MODE"
+	runModeEnvKey = "RUN_MODE"
 )
 
 func main() {
-	option := o.NewOption()
-	option.
-		SetBasePath(ConfigFileBasePath).
-		SetFileName(o.Development, DevelopConfigFileName).
-		SetFileName(o.Staging, StagingConfigFileName).
-		SetFileName(o.Production, ProductConfigFileName).
-		LoadCurrentRunMode(RunModeEnvKey)
+	o := option.NewOption()
+	o.
+		SetDefaultFilePath(defaultConfigFilePath).
+		SetModeToFilePath(enum.Development, developConfigFilePath).
+		SetModeToFilePath(enum.Staging, stagingConfigFilePath).
+		SetModeToFilePath(enum.Production, productConfigFilePath).
+		SetCurrentRunMode(runModeEnvKey)
 
-	cfg, _ := c.Unmarshal[Scheme](option)
-	fmt.Printf("Key1: %s\n", cfg.App1.Key1)
+	cfg, err := gocnf.Unmarshal[Scheme](o)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%v", cfg)
 }

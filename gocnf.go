@@ -2,6 +2,7 @@ package gocnf
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"reflect"
 
@@ -10,9 +11,19 @@ import (
 )
 
 func Unmarshal[C any](opt *option.Option) (*C, error) {
-	base := opt.File.BasePath
-	filename := opt.File.Name[opt.RunMode]
-	path := string(base) + "/" + filename
+	var path string
+	// RunModeとファイルパスの設定がされていない場合はFilePathを使用する
+	modeToFilePath := opt.ModeToFilePath[opt.RunMode]
+	if modeToFilePath != "" {
+		path = modeToFilePath
+		log.Printf("【INFO】実行モード[%s] で設定ファイル [%s] を読み込みます。", opt.RunMode, modeToFilePath)
+	} else {
+		if opt.DefaultFilePath == "" {
+			return nil, fmt.Errorf("設定ファイルパスが未指定です。SetFilePath()を呼び出して設定してください。")
+		}
+		path = opt.DefaultFilePath
+		log.Printf("【INFO】デフォルトに設定されたファイルを読み込みます。 パス: [%s]", opt.DefaultFilePath)
+	}
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {
