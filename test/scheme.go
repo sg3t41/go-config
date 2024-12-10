@@ -42,7 +42,7 @@ type Proxy struct {
 	Upstreams []Upstream `yaml:"upstreams"`
 }
 
-type Config struct {
+type Scheme struct {
 	API      API      `yaml:"api"`
 	Frontend Frontend `yaml:"frontend"`
 	Database Database `yaml:"database"`

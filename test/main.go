@@ -3,21 +3,19 @@ package main
 import (
 	"fmt"
 
-	"github.com/sg3t41/gocnf/config"
-	"github.com/sg3t41/gocnf/strategy"
+	"github.com/sg3t41/gocnf"
+	"github.com/sg3t41/gocnf/pkg/filetype"
 )
 
 func main() {
-	c := config.NewConfig()
-	c.
-		SetFilePath("../config/config.local.yml").
-		SetStrategy(&strategy.YamlStrategy{})
+	gc := gocnf.GoCnf[Scheme]{
+		FileType: filetype.YAML,
+		FilePath: "../config/config.local.yml",
+	}
 
-	var scheme Config
-	err := c.Unmarshal(&scheme)
+	cnf, err := gc.Unmarshal()
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	fmt.Println(&scheme)
+	fmt.Println(cnf.API.Port)
 }
