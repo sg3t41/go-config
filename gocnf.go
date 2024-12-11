@@ -2,43 +2,60 @@ package gocnf
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"reflect"
+	"path/filepath"
 
-	"github.com/sg3t41/gocnf/option"
-	"gopkg.in/yaml.v3"
+	"github.com/sg3t41/gocnf/config"
+	"github.com/sg3t41/gocnf/strategy"
+	"github.com/sg3t41/gocnf/strategy/json"
+	"github.com/sg3t41/gocnf/strategy/yaml"
 )
 
-func Unmarshal[C any](opt *option.Option) (*C, error) {
-	var path string
-	// RunModeとファイルパスの設定がされていない場合はFilePathを使用する
-	modeToFilePath := opt.ModeToFilePath[opt.RunMode]
-	if modeToFilePath != "" {
-		path = modeToFilePath
-		log.Printf("【INFO】実行モード[%s] で設定ファイル [%s] を読み込みます。", opt.RunMode, modeToFilePath)
-	} else {
-		if opt.DefaultFilePath == "" {
-			return nil, fmt.Errorf("設定ファイルパスが未指定です。SetFilePath()を呼び出して設定してください。")
-		}
-		path = opt.DefaultFilePath
-		log.Printf("【INFO】デフォルトに設定されたファイルを読み込みます。 パス: [%s]", opt.DefaultFilePath)
-	}
+type gocnf[T any] struct {
+	FilePath string
+}
 
-	bytes, err := os.ReadFile(path)
+func New[T any](filePath string) *gocnf[T] {
+	return &gocnf[T]{
+		FilePath: filePath,
+	}
+}
+
+func (gc gocnf[T]) Unmarshal() (*T, error) {
+	strategy, err := getStrategy(gc.FilePath)
 	if err != nil {
-		return nil, fmt.Errorf("設定ファイルの読み込みに失敗しました。 %s: %v", path, err)
+		return nil, err
 	}
 
-	kind := reflect.TypeOf((*C)(nil)).Elem().Kind()
-	if kind != reflect.Struct {
-		return nil, fmt.Errorf("gocnf.Unmarshalのジェネリックは構造体である必要があります。 要求された型: %s", kind)
+	c := config.NewConfig()
+	c.
+		SetFilePath(gc.FilePath).
+		SetStrategy(strategy)
+
+	var out T
+	if err := c.Unmarshal(&out); err != nil {
+		return nil, err
 	}
 
-	var c C
-	if err := yaml.Unmarshal(bytes, &c); err != nil {
-		return nil, fmt.Errorf("Unmarshalに失敗しました エラー: %v", err)
+	return &out, nil
+}
+
+func getStrategy(confFilePath string) (strategy.IStrategy, error) {
+	// 設定ファイルの拡張子を取得する
+	ext := filepath.Ext(confFilePath)
+	if ext == "" {
+		return nil, fmt.Errorf("ファイルの拡張子が見つかりません。")
 	}
 
-	return &c, nil
+	// 設定ファイルの拡張子によってストラテジを決定する
+	switch ext {
+	case ".yaml":
+	case ".yml":
+		return &yaml.YamlStrategy{}, nil
+	case ".json":
+		return &json.JSONStrategy{}, nil
+	// add to
+	default:
+		return nil, fmt.Errorf("ファイルタイプに適した戦略が存在しません。")
+	}
+	return nil, fmt.Errorf("ファイルタイプに適した戦略が存在しません。")
 }

@@ -1,0 +1,20 @@
+# Common reusable definitions (anchors & aliases for simplicity)
+common_ports:
+  api: &api_port 8080
+
+api:
+  port: *api_port
+  debug: true
+  log_level: info
+  endpoints:
+    - path: /v1/status
+      method: GET
+    - path: /v1/users
+      method: POST
+    - path: /v1/users/{id}
+      method: PUT
+  security:
+    enable_auth: true
+    allowed_origins:
+      - https://example.com
+      - https://api.example.com
