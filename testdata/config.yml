@@ -1,0 +1,99 @@
+# Common reusable definitions (anchors & aliases for simplicity)
+common_ports:
+  api: &api_port 8080
+  frontend: &frontend_port 3000
+  database: &database_port 5432
+  cache: &cache_port 6379
+  proxy: &proxy_port 443
+
+# API configuration
+api:
+  port: *api_port
+  debug: true
+  log_level: info
+  endpoints:
+    - path: /v1/status
+      method: GET
+    - path: /v1/users
+      method: POST
+    - path: /v1/users/{id}
+      method: PUT
+  security:
+    enable_auth: true
+    allowed_origins:
+      - https://example.com
+      - https://api.example.com
+
+# Frontend configuration
+frontend:
+  port: *frontend_port
+  enable_https: true
+  domains:
+    - example.com
+    - www.example.com
+  static_assets_path: /var/www/static
+  caching:
+    enabled: true
+    max_age: 3600
+
+# Database configuration
+database:
+  host: db.example.com
+  port: *database_port
+  username: app_user
+  password: secret
+  replicas:
+    - host: replica1.db.example.com
+      port: 5433
+    - host: replica2.db.example.com
+      port: 5434
+  pool:
+    max_connections: 50
+    min_connections: 5
+    connection_timeout: 30s
+
+# Cache configuration
+cache:
+  host: redis.example.com
+  port: *cache_port
+  password: redis_secret
+  db: 0
+  timeout: 5s
+
+# Proxy configuration
+proxy:
+  host: proxy.example.com
+  port: *proxy_port
+  ssl: true
+  upstreams:
+    - name: api
+      host: localhost
+      port: *api_port
+    - name: frontend
+      host: localhost
+      port: *frontend_port
+
+# Logging configuration
+logging:
+  level: debug
+  output: /var/log/app.log
+  rotation:
+    max_size: 10MB
+    max_backups: 3
+    max_age: 7d
+
+# Feature flags (for experimentation)
+features:
+  enable_new_ui: false
+  enable_beta_feature: true
+
+# Email settings
+email:
+  smtp_server: smtp.example.com
+  port: 587
+  username: no-reply@example.com
+  password: email_password
+  from_address: no-reply@example.com
+  recipients:
+    - admin@example.com
+    - support@example.com
