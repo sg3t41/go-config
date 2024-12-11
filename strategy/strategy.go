@@ -5,20 +5,20 @@ import (
 	"os"
 )
 
-type Strategy interface {
+type IStrategy interface {
 	Load(path string) error
 	Unmarshal(out any) error
 }
 
-type DefaultStrategy struct {
-	data []byte
+type Strategy struct {
+	Data []byte
 }
 
-func (d *DefaultStrategy) Load(path string) error {
+func (d *Strategy) Load(path string) error {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("設定ファイルの読み込みに失敗しました。 %s: %v", path, err)
 	}
-	d.data = bytes
+	d.Data = bytes
 	return nil
 }

@@ -6,6 +6,8 @@ import (
 
 	"github.com/sg3t41/gocnf/config"
 	"github.com/sg3t41/gocnf/strategy"
+	"github.com/sg3t41/gocnf/strategy/json"
+	"github.com/sg3t41/gocnf/strategy/yaml"
 )
 
 type gocnf[T any] struct {
@@ -19,22 +21,25 @@ func New[T any](filePath string) *gocnf[T] {
 }
 
 func (gc gocnf[T]) Unmarshal() (*T, error) {
-	s, _ := getStrategy(gc.FilePath)
-	c := config.NewConfig()
-	c.
-		SetFilePath(gc.FilePath).
-		SetStrategy(s)
-
-	var t T
-	err := c.Unmarshal(&t)
+	strategy, err := getStrategy(gc.FilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	return &t, nil
+	c := config.NewConfig()
+	c.
+		SetFilePath(gc.FilePath).
+		SetStrategy(strategy)
+
+	var out T
+	if err := c.Unmarshal(&out); err != nil {
+		return nil, err
+	}
+
+	return &out, nil
 }
 
-func getStrategy(confFilePath string) (strategy.Strategy, error) {
+func getStrategy(confFilePath string) (strategy.IStrategy, error) {
 	// 設定ファイルの拡張子を取得する
 	ext := filepath.Ext(confFilePath)
 	if ext == "" {
@@ -45,9 +50,9 @@ func getStrategy(confFilePath string) (strategy.Strategy, error) {
 	switch ext {
 	case ".yaml":
 	case ".yml":
-		return &strategy.YamlStrategy{}, nil
+		return &yaml.YamlStrategy{}, nil
 	case ".json":
-		return &strategy.JSONStrategy{}, nil
+		return &json.JSONStrategy{}, nil
 	// add to
 	default:
 		return nil, fmt.Errorf("ファイルタイプに適した戦略が存在しません。")
