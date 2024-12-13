@@ -1,4 +1,4 @@
-package testdatayaml
+package yaml
 
 type Endpoint struct {
 	Path   string `yaml:"path"`

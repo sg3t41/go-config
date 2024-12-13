@@ -28,13 +28,12 @@ type TestableStrategy struct {
 	FileReader func(string) ([]byte, error)
 }
 
-func (s *TestableStrategy) Load(path string) error {
+func (s *TestableStrategy) Load(path string) ([]byte, error) {
 	bytes, err := s.FileReader(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	s.Data = bytes
-	return nil
+	return bytes, nil
 }
 
 func TestStrategy_Load(t *testing.T) {
@@ -47,9 +46,9 @@ func TestStrategy_Load(t *testing.T) {
 			FileReader: mockReader.ReadFile,
 		}
 
-		err := strategy.Load("test.yml")
+		data, err := strategy.Load("test.yml")
 		assert.NoError(t, err, "ファイルの読み込みに成功するべきです")
-		assert.Equal(t, []byte("key: value"), strategy.Data, "読み込まれたデータが正しいこと")
+		assert.Equal(t, []byte("key: value"), data, "読み込まれたデータが正しいこと")
 		mockReader.AssertCalled(t, "ReadFile", "test.yml")
 	})
 
@@ -62,7 +61,7 @@ func TestStrategy_Load(t *testing.T) {
 			FileReader: mockReader.ReadFile,
 		}
 
-		err := strategy.Load("not_found.yml")
+		_, err := strategy.Load("not_found.yml")
 		assert.Error(t, err, "ファイルが見つからない場合エラーが返るべきです")
 		assert.Contains(t, err.Error(), "ファイルが見つかりません", "エラーメッセージが正しいこと")
 		mockReader.AssertCalled(t, "ReadFile", "not_found.yml")

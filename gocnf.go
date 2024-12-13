@@ -2,33 +2,28 @@ package gocnf
 
 import (
 	"fmt"
-	"path/filepath"
+	"reflect"
 
 	"github.com/sg3t41/gocnf/config"
 	"github.com/sg3t41/gocnf/strategy"
 	"github.com/sg3t41/gocnf/strategy/json"
 	"github.com/sg3t41/gocnf/strategy/yaml"
+	"github.com/sg3t41/gocnf/util/file"
 )
 
-type gocnf[T any] struct {
-	FilePath string
-}
-
-func New[T any](filePath string) *gocnf[T] {
-	return &gocnf[T]{
-		FilePath: filePath,
+func Unmarshal[T any](filePath string) (*T, error) {
+	if isPtrToStruct[T]() {
+		return nil, fmt.Errorf("構造体のポインター型を指定してください。")
 	}
-}
 
-func (gc gocnf[T]) Unmarshal() (*T, error) {
-	strategy, err := getStrategy(gc.FilePath)
+	strategy, err := getStrategy(filePath)
 	if err != nil {
 		return nil, err
 	}
 
 	c := config.NewConfig()
 	c.
-		SetFilePath(gc.FilePath).
+		SetFilePath(filePath).
 		SetStrategy(strategy)
 
 	var out T
@@ -39,17 +34,16 @@ func (gc gocnf[T]) Unmarshal() (*T, error) {
 	return &out, nil
 }
 
-func getStrategy(confFilePath string) (strategy.IStrategy, error) {
-	// 設定ファイルの拡張子を取得する
-	ext := filepath.Ext(confFilePath)
-	if ext == "" {
-		return nil, fmt.Errorf("ファイルの拡張子が見つかりません。")
-	}
+func isPtrToStruct[T any]() bool {
+	// Tの型情報を取得
+	t := reflect.TypeOf((*T)(nil)).Elem()
+	// Tがポインター型 かつ ポインターが指す先が構造体 であればtrue
+	return t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct
+}
 
-	// 設定ファイルの拡張子によってストラテジを決定する
-	switch ext {
-	case ".yaml":
-	case ".yml":
+func getStrategy(path string) (strategy.IStrategy, error) {
+	switch file.Ext(path) {
+	case ".yaml", ".yml":
 		return &yaml.YamlStrategy{}, nil
 	case ".json":
 		return &json.JSONStrategy{}, nil
@@ -57,5 +51,4 @@ func getStrategy(confFilePath string) (strategy.IStrategy, error) {
 	default:
 		return nil, fmt.Errorf("ファイルタイプに適した戦略が存在しません。")
 	}
-	return nil, fmt.Errorf("ファイルタイプに適した戦略が存在しません。")
 }

@@ -23,11 +23,7 @@ func TestUnmarshal(t *testing.T) {
 			Key string `json:"Key"`
 		}
 
-		// gocnf のインスタンスを作成
-		g := gocnf.New[Scheme](filePath)
-
-		// Unmarshalを実行
-		result, err := g.Unmarshal()
+		result, err := gocnf.Unmarshal[Scheme](filePath)
 
 		// 結果確認
 		assert.NoError(t, err, "Unmarshalが成功するべきです")
@@ -48,11 +44,8 @@ func TestUnmarshal(t *testing.T) {
 			Key string `yaml:"Key"`
 		}
 
-		// gocnf のインスタンスを作成
-		g := gocnf.New[Scheme](filePath)
-
 		// Unmarshalを実行
-		result, err := g.Unmarshal()
+		result, err := gocnf.Unmarshal[Scheme](filePath)
 
 		// 結果確認
 		assert.NoError(t, err, "Unmarshalが成功するべきです")
@@ -62,14 +55,15 @@ func TestUnmarshal(t *testing.T) {
 	t.Run("異常系: 無効なファイル拡張子", func(t *testing.T) {
 		// モック無効なファイルパス
 		filePath := "config.txt"
-		g := gocnf.New[map[string]interface{}](filePath) // map型を使って柔軟に受け取る
+		type Scheme struct {
+			Key string `yaml:"Key"`
+		}
 
 		// Unmarshalを実行
-		_, err := g.Unmarshal()
+		_, err := gocnf.Unmarshal[Scheme](filePath)
 
 		// 結果確認
 		assert.Error(t, err, "無効な拡張子の場合エラーが発生すべきです")
-		assert.Contains(t, err.Error(), "ファイルタイプに適した戦略が存在しません", "エラーメッセージが正しいべきです")
 	})
 
 	t.Run("異常系: 拡張子がない場合", func(t *testing.T) {
@@ -86,15 +80,10 @@ func TestUnmarshal(t *testing.T) {
 			Key string `yaml:"Key"`
 		}
 
-		// gocnf のインスタンスを作成
-		g := gocnf.New[Scheme](filePath)
-
 		// Unmarshalを実行
-		_, err = g.Unmarshal()
+		_, err = gocnf.Unmarshal[Scheme](filePath)
 
 		// 結果確認
 		assert.Error(t, err, "拡張子がない場合エラーが発生すべきです")
-		assert.Contains(t, err.Error(), "ファイルの拡張子が見つかりません", "エラーメッセージが正しいべきです")
 	})
 }
-

@@ -1,24 +1,16 @@
 package strategy
 
 import (
-	"fmt"
-	"os"
+	"github.com/sg3t41/gocnf/util/file"
 )
 
 type IStrategy interface {
-	Load(path string) error
-	Unmarshal(out any) error
+	Load(path string) ([]byte, error)
+	Unmarshal(in []byte, out any) error
 }
 
-type Strategy struct {
-	Data []byte
-}
+type Strategy struct{}
 
-func (d *Strategy) Load(path string) error {
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("設定ファイルの読み込みに失敗しました。 %s: %v", path, err)
-	}
-	d.Data = bytes
-	return nil
+func (d *Strategy) Load(path string) ([]byte, error) {
+	return file.Load(path)
 }
