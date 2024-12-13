@@ -1,6 +1,8 @@
 package config
 
-import "github.com/sg3t41/gocnf/strategy"
+import (
+	"github.com/sg3t41/gocnf/strategy"
+)
 
 type config struct {
 	FilePath string
@@ -22,11 +24,9 @@ func (c *config) SetFilePath(path string) *config {
 }
 
 func (c *config) Unmarshal(out any) error {
-	if err := c.Strategy.Load(c.FilePath); err != nil {
+	in, err := c.Strategy.Load(c.FilePath)
+	if err != nil {
 		return err
 	}
-	if err := c.Strategy.Unmarshal(out); err != nil {
-		return err
-	}
-	return nil
+	return c.Strategy.Unmarshal(in, out)
 }

@@ -12,12 +12,12 @@ type MockStrategy struct {
 	mock.Mock
 }
 
-func (m *MockStrategy) Load(filePath string) error {
+func (m *MockStrategy) Load(filePath string) ([]byte, error) {
 	args := m.Called(filePath)
-	return args.Error(0)
+	return nil, args.Error(0)
 }
 
-func (m *MockStrategy) Unmarshal(out any) error {
+func (m *MockStrategy) Unmarshal(in []byte, out any) error {
 	args := m.Called(out)
 	return args.Error(0)
 }
@@ -89,4 +89,3 @@ func TestConfig_Unmarshal(t *testing.T) {
 		mockStrategy.AssertCalled(t, "Unmarshal", &output)
 	})
 }
-

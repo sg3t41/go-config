@@ -1,4 +1,4 @@
-package testdatajson
+package json
 
 type Endpoint struct {
 	Path   string `yaml:"path"`
