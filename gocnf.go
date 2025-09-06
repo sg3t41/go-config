@@ -1,22 +1,31 @@
 package gocnf
 
 import (
-	"fmt"
+	"errors"
 	"reflect"
 
 	"github.com/sg3t41/gocnf/config"
 	"github.com/sg3t41/gocnf/strategy"
 	"github.com/sg3t41/gocnf/strategy/json"
 	"github.com/sg3t41/gocnf/strategy/yaml"
-	"github.com/sg3t41/gocnf/util/file"
 )
 
+// ErrTypeIsPointer indicates that a pointer type was passed as a type argument
+// where a struct type was expected.
+var ErrTypeIsPointer = errors.New("gocnf: type argument must be a struct, not a pointer")
+
+func init() {
+	strategy.Register(".json", &json.JSONStrategy{})
+	strategy.Register(".yaml", &yaml.YamlStrategy{})
+	strategy.Register(".yml", &yaml.YamlStrategy{})
+}
+
 func Unmarshal[T any](filePath string) (*T, error) {
-	if isPtrToStruct[T]() {
-		return nil, fmt.Errorf("構造体のポインター型を指定してください。")
+	if isTypePtr[T]() {
+		return nil, ErrTypeIsPointer
 	}
 
-	strategy, err := getStrategy(filePath)
+	s, err := strategy.Get(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +33,7 @@ func Unmarshal[T any](filePath string) (*T, error) {
 	c := config.NewConfig()
 	c.
 		SetFilePath(filePath).
-		SetStrategy(strategy)
+		SetStrategy(s)
 
 	var out T
 	if err := c.Unmarshal(&out); err != nil {
@@ -34,21 +43,9 @@ func Unmarshal[T any](filePath string) (*T, error) {
 	return &out, nil
 }
 
-func isPtrToStruct[T any]() bool {
-	// Tの型情報を取得
-	t := reflect.TypeOf((*T)(nil)).Elem()
-	// Tがポインター型 かつ ポインターが指す先が構造体 であればtrue
-	return t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct
-}
-
-func getStrategy(path string) (strategy.IStrategy, error) {
-	switch file.Ext(path) {
-	case ".yaml", ".yml":
-		return &yaml.YamlStrategy{}, nil
-	case ".json":
-		return &json.JSONStrategy{}, nil
-	// add to
-	default:
-		return nil, fmt.Errorf("ファイルタイプに適した戦略が存在しません。")
-	}
+// isTypePtr checks if the generic type T is a pointer.
+func isTypePtr[T any]() bool {
+	// reflect.TypeOf((*T)(nil)).Elem() gets the reflection type of T.
+	// We then check if its Kind is a pointer.
+	return reflect.TypeOf((*T)(nil)).Elem().Kind() == reflect.Ptr
 }
